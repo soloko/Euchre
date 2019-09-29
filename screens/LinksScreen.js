@@ -64,7 +64,7 @@ export default class LinksScreen extends React.Component {
 }
 
 LinksScreen.navigationOptions = {
-  title: 'Links',
+  title: 'Learn Euchre',
 };
 
 const styles = StyleSheet.create({

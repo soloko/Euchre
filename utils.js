@@ -128,18 +128,80 @@ export const trumpRankings = (trumpSuit, card) => {
   }
 }
 
-const findLeftBower = (trump) => {
-  switch (trump){
+const findTrumpInHand = (cards, trumpSuit) => {
+  let hand = {
+    trump: [],
+    nonTrump: []
+  }
+  let left = []
+
+  switch (trumpSuit) {
     case 'D':
-      return ['J', 'H']
+      left = ['J', 'H']
+      cards.forEach(card => {
+        if (card[0] === left[0] && card[1] === left[1]){
+          hand.trump.push(card)
+        } else if (card[1] === trumpSuit){
+          hand.trump.push(card)
+        } else {
+          hand.nonTrump.push(card)
+        }
+      })
+      return hand
+    case 'C':
+      left = ['J', 'S']
+      cards.forEach(card => {
+        if (card[0] === left[0] && card[1] === left[1]){
+          hand.trump.push(card)
+        } else if (card[1] === trumpSuit){
+          hand.trump.push(card)
+        } else {
+          hand.nonTrump.push(card)
+        }
+      })
+      return hand
     case 'H':
-      return ['J', 'D']
+        left = ['J', 'D']
+        cards.forEach(card => {
+          if (card[0] === left[0] && card[1] === left[1]){
+            hand.trump.push(card)
+          } else if (card[1] === trumpSuit){
+            hand.trump.push(card)
+          } else {
+            hand.nonTrump.push(card)
+          }
+        })
+        return hand
     case 'S':
-      return ['J', 'C']
+      left = ['J', 'C']
+      cards.forEach(card => {
+        if (card[0] === left[0] && card[1] === left[1]){
+          hand.trump.push(card)
+        } else if (card[1] === trumpSuit){
+          hand.trump.push(card)
+        } else {
+          hand.nonTrump.push(card)
+        }
+      })
+      return hand
     default:
-      return ['J', 'S']
+      return cards
   }
 }
+
+// don't think i neeed this anymore
+// const findLeftBower = (trump) => {
+//   switch (trump){
+//     case 'D':
+//       return ['J', 'H']
+//     case 'H':
+//       return ['J', 'D']
+//     case 'S':
+//       return ['J', 'C']
+//     default:
+//       return ['J', 'S']
+//   }
+// }
 
 export const cardRankings = (card, suitLead, trump) => {
   if (trump === suitLead && card[1] !== trump){
@@ -166,49 +228,56 @@ export const cardRankings = (card, suitLead, trump) => {
   }
 }
 
+// don't think i need this
+// const trumpIt = (cards, trump) => {
+//   if (cards.includes(findLeftBower(trump))) {
+//     return true
+//   } else {
+//     return cards.some(card => card[1] === trump)
+//   }
+// }
 
 const followSuit = (cards, suitLead) => {
   return cards.some(card => card[1] === suitLead)
 }
 
-const trumpIt = (cards, trump) => {
-  if (cards.includes(findLeftBower(trump))) {
-    return true
-  } else {
-    return cards.some(card => card[1] === trump)
+export const playCard = (cards, suitLead, trump) => {
+  // so we know what the next function returns
+  let sortedHand = {
+    trump: [],
+    nonTrump: [],
+  }
+  sortedHand = findTrumpInHand(cards, trump)
+  let playObj = {
+    restOfHand: [],
+    cardToPlay: []
+  }
+  // must play trump
+  if (suitLead === trump && sortedHand.trump.length){
+    playObj.cardToPlay = sortedHand.trump.splice(0, 1)
+    playObj.restOfHand = [...sortedHand.trump, ...sortedHand.nonTrump]
+    return playObj
+  }
+  // must follow suit
+  else if (followSuit(cards, suitLead)){
+    playObj.cardToPlay = sortedHand.nonTrump.find(card => card[1] === suitLead)
+    const otherNons = sortedHand.nonTrump.filter(card => card !== playObj.cardToPlay)
+    playObj.restOfHand = [...otherNons, ...sortedHand.trump]
+    return playObj
+  }
+  // trump the current lead
+  else if (sortedHand.trump.length){
+    playObj.cardToPlay = sortedHand.trump.splice(0, 1)
+    playObj.restOfHand = [...sortedHand.trump, ...sortedHand.nonTrump]
+    return playObj
+  }
+  // just play anything
+  else {
+    playObj.cardToPlay = sortedHand.nonTrump.splice(0, 1)
+    playObj.restOfHand = [...sortedHand.trump, ...sortedHand.nonTrump]
+    return playObj
   }
 }
-
-// export const playCard = (cards, suitLead, trump, cardWinning) => {
-//   let left = findLeftBower(trump)
-//   let hasLeft = cards.includes(left)
-//   let playObj = {
-//     restOfHand: []
-//   }
-//   if (withoutBower.length === 4){
-//     if (followSuit(withoutBower, suitLead)){
-//       for (let i = 0; i < withoutBower.length; i++){
-//         let card = withoutBower[i]
-//         if (card[1] === suitLead && !playObj.cardToPlay){
-//           playObj.cardToPlay = card
-//         } else {
-//           playObj.restOfHand.push(card)
-//         }
-//       }
-//       return playObj
-//     } else if (trumpIt(withoutBower, trump)){
-
-//     }
-//   }
-//   else if (followSuit(cards, suitLead)){
-//     const cardToPlay = cards.find(c => c[1] === suitLead)
-//     const restOfHand = (cards.filter(c => c !== cardToPlay))
-//   }
-//   else if (trumpIt(cards, trump)){
-//     cards.filter(c => c[1] === trump)
-//   }
-
-// }
 
 export const isNextCardWinning = (cardWinning, nextCard, suitLead, trump) => {
   if (cardRankings(nextCard, suitLead, trump) > cardRankings(cardWinning, suitLead, trump)){

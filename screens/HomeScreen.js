@@ -16,8 +16,7 @@ import {
 import { MonoText } from '../components/StyledText';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Card from '../components/Card'
-import {fullDeck, suitToIcon, randomPhrase} from '../utils'
-import { thisTypeAnnotation } from '@babel/types';
+import { fullDeck, suitToIcon, randomPhrase, playCard } from '../utils'
 
 
 export default class HomeScreen extends React.Component {
@@ -60,6 +59,7 @@ export default class HomeScreen extends React.Component {
       quote: randomPhrase(),
     }
     this.handlePlay = this.handlePlay.bind(this)
+    // this.handleAwayOne = this.handleAwayOne.bind(this)
     this.handleDeal = this.handleDeal.bind(this)
     this.setTrump = this.setTrump.bind(this)
 
@@ -126,14 +126,17 @@ export default class HomeScreen extends React.Component {
   }
   handlePlay(card) {
     const homeOne = this.state.homeOne.filter(e => e !== card)
-
     this.setState({
       homeOne: homeOne,
       homeOnePlayed: card,
-      homeTwo: [],
-      awayOne: [],
-      awayTwo: []
+      suitLead: card[1]
     })
+    const {restOfHand, cardToPlay} = playCard(this.state.awayOne, this.state.suitLead, this.state.trump)
+    this.setState({
+      awayOne: restOfHand,
+      awayOnePlayed: cardToPlay
+    })
+    console.log(this.state.awayOne)
   }
 
 
@@ -244,10 +247,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     marginTop: 10
   },
-  // card: {
-  //   minHeight: 105,
-  //   width: 67
-  // },
   callPassContainer: {
     flex: 1,
     flexDirection: 'row',
