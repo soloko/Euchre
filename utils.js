@@ -1,7 +1,7 @@
-import { CardSwiper } from "native-base";
-
 /* eslint-disable complexity */
 /* eslint-disable guard-for-in */
+
+// DECK RELATED FUNCTIONS
 class Deck {
   constructor() {
     this.deck = [];
@@ -59,11 +59,12 @@ export const suitToIcon = (letter) => {
   }
 }
 
+// TURNS
 export const nextTurn = (index) => {
   return index === 3 ? 0 : index + 1
 }
 
-export const turnOrder = (playerLead) => {
+export const turnOrderArray = (playerLead) => {
   switch (playerLead){
     case 'awayOne':
       return ['homeTwo', 'awayTwo', 'homeOne']
@@ -76,56 +77,70 @@ export const turnOrder = (playerLead) => {
   }
 }
 
-export const trumpRankings = (trumpSuit, card) => {
-  let val = 0
+// EVALUATE CARDS
+const trumpRankings = (trumpSuit, card) => {
+  let val = 7
   switch (trumpSuit) {
     case 'D':
-      val = 10 + [
-        ['9', 'D'],
-        ['10', 'D'],
-        ['Q', 'D'],
-        ['K', 'D'],
-        ['A', 'D'],
-        ['J', 'H'],
-        ['J', 'D'],
-      ].indexOf(card)
+      val += '9D10DQDKDADJHJD'.indexOf(card.join(''))
       return val
     case 'C':
-      val = 10 + [
-        ['9', 'C'],
-        ['10', 'C'],
-        ['Q', 'C'],
-        ['K', 'C'],
-        ['A', 'C'],
-        ['J', 'S'],
-        ['J', 'C'],
-      ].indexOf(card)
+      val += '9C10CQCKCACJSJC'.indexOf(card.join(''))
       return val
     case 'H':
-      val = 10 + [
-        ['9', 'H'],
-        ['10', 'H'],
-        ['Q', 'H'],
-        ['K', 'H'],
-        ['A', 'H'],
-        ['J', 'D'],
-        ['J', 'H'],
-      ].indexOf(card)
+      val += '9H10HQHKHAHJDJH'.indexOf(card.join(''))
       return val
     case 'S':
-      val = 10 + [
-        ['9', 'S'],
-        ['10', 'S'],
-        ['Q', 'S'],
-        ['K', 'S'],
-        ['A', 'S'],
-        ['J', 'C'],
-        ['J', 'S'],
-      ].indexOf(card)
+      val += '9S10SQSKSASJCJS'.indexOf(card.join(''))
       return val
     default:
       return val
   }
+}
+
+const findLeftBower = (trump) => {
+  switch (trump){
+    case 'D':
+      return 'JH'
+    case 'H':
+      return 'JD'
+    case 'S':
+      return 'JC'
+    default:
+      return 'JS'
+  }
+}
+
+const cardRankings = (card, suitLead, trump) => {
+  if (card[1] === trump || card.join('') === findLeftBower(trump)){
+    return trumpRankings(trump, card)
+  } else if (card[1] !== suitLead){
+    return 0
+  } else {
+    switch (card[0]){
+      case '9':
+        return 1
+      case '10':
+        return 2
+      case 'J':
+        return 3
+      case 'Q':
+        return 4
+      case 'K':
+        return 5
+      case 'A':
+        return 6
+      default:
+        return 0
+    }
+  }
+}
+
+export const isNextCardWinning = (cardWinning, nextCard, suitLead, trump) => {
+  if (cardRankings(nextCard, suitLead, trump) > cardRankings(cardWinning, suitLead, trump)){
+    return true
+  }
+  return false
 }
 
 const findTrumpInHand = (cards, trumpSuit) => {
@@ -189,54 +204,7 @@ const findTrumpInHand = (cards, trumpSuit) => {
   }
 }
 
-// don't think i neeed this anymore
-// const findLeftBower = (trump) => {
-//   switch (trump){
-//     case 'D':
-//       return ['J', 'H']
-//     case 'H':
-//       return ['J', 'D']
-//     case 'S':
-//       return ['J', 'C']
-//     default:
-//       return ['J', 'S']
-//   }
-// }
-
-export const cardRankings = (card, suitLead, trump) => {
-  if (trump === suitLead && card[1] !== trump){
-     return 0
-  } else if (card[1] === trump){
-    return trumpRankings(trump, card)
-  } else {
-    switch (card[0]){
-      case '9':
-        return 1
-      case '10':
-        return 2
-      case 'J':
-        return 3
-      case 'Q':
-        return 4
-      case 'K':
-        return 5
-      case 'A':
-        return 6
-      default:
-        return 0
-    }
-  }
-}
-
-// don't think i need this
-// const trumpIt = (cards, trump) => {
-//   if (cards.includes(findLeftBower(trump))) {
-//     return true
-//   } else {
-//     return cards.some(card => card[1] === trump)
-//   }
-// }
-
+// COMPUTER PLAY CARD
 const followSuit = (cards, suitLead) => {
   return cards.some(card => card[1] === suitLead)
 }
@@ -254,12 +222,13 @@ export const playCard = (cards, suitLead, trump) => {
   }
   // must play trump
   if (suitLead === trump && sortedHand.trump.length){
-    playObj.cardToPlay = sortedHand.trump.splice(0, 1)
+    const tempCard = sortedHand.trump.splice(0, 1)
+    playObj.cardToPlay = tempCard[0]
     playObj.restOfHand = [...sortedHand.trump, ...sortedHand.nonTrump]
     return playObj
   }
   // must follow suit
-  else if (followSuit(cards, suitLead)){
+  else if (followSuit(sortedHand.nonTrump, suitLead)){
     playObj.cardToPlay = sortedHand.nonTrump.find(card => card[1] === suitLead)
     const otherNons = sortedHand.nonTrump.filter(card => card !== playObj.cardToPlay)
     playObj.restOfHand = [...otherNons, ...sortedHand.trump]
@@ -267,29 +236,34 @@ export const playCard = (cards, suitLead, trump) => {
   }
   // trump the current lead
   else if (sortedHand.trump.length){
-    playObj.cardToPlay = sortedHand.trump.splice(0, 1)
+    const tempCard = sortedHand.trump.splice(0, 1)
+    playObj.cardToPlay = tempCard[0]
     playObj.restOfHand = [...sortedHand.trump, ...sortedHand.nonTrump]
     return playObj
   }
   // just play anything
   else {
-    playObj.cardToPlay = sortedHand.nonTrump.splice(0, 1)
+    const tempCard = sortedHand.nonTrump.splice(0, 1)
+    playObj.cardToPlay = tempCard[0]
     playObj.restOfHand = [...sortedHand.trump, ...sortedHand.nonTrump]
     return playObj
   }
 }
 
-export const isNextCardWinning = (cardWinning, nextCard, suitLead, trump) => {
-  if (cardRankings(nextCard, suitLead, trump) > cardRankings(cardWinning, suitLead, trump)){
-    return true
-  }
-  return false
-}
-
+// PLEASE GO SLOWER, AI
 export const communicationText = (dealer, turnIndex, turnOrder, trump, calledBy) => {
   // you called diamonds
   // your call
   //
+  console.log(dealer)
+  console.log(turnIndex)
+  console.log(turnOrder)
+  console.log(trump)
+  console.log(calledBy)
+}
+
+export const pleaseWait = (func) => {
+  setTimeout(func, 800)
 }
 
 export const randomPhrase = () => {

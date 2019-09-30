@@ -16,7 +16,8 @@ import {
 import { MonoText } from '../components/StyledText';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Card from '../components/Card'
-import { fullDeck, suitToIcon, randomPhrase, playCard } from '../utils'
+import { fullDeck, suitToIcon, randomPhrase, playCard, pleaseWait, isNextCardWinning } from '../utils'
+import { thisTypeAnnotation } from '@babel/types';
 
 
 export default class HomeScreen extends React.Component {
@@ -33,14 +34,10 @@ export default class HomeScreen extends React.Component {
       turnPointer: 0,
       turnOrder: ['homeOne', 'awayOne', 'homeTwo', 'awayTwo'],
       dealer: 0,
-      tricks: {
-        home: 0,
-        away: 0
-      },
-      gamePoints: {
-        home: 0,
-        away: 0
-      },
+      homeTricks: 0,
+      awayTricks: 0,
+      homeGames: 0,
+      awayGames: 0,
       currentCardWinning: {
         card: [],
         player: '',
@@ -59,15 +56,13 @@ export default class HomeScreen extends React.Component {
       quote: randomPhrase(),
     }
     this.handlePlay = this.handlePlay.bind(this)
-    // this.handleAwayOne = this.handleAwayOne.bind(this)
+    this.handlePlayAwayOne = this.handlePlayAwayOne.bind(this)
+    this.handlePlayAwayTwo = this.handlePlayAwayTwo.bind(this)
+    this.handlePlayHomeTwo = this.handlePlayHomeTwo.bind(this)
+    this.handlePoint = this.handlePoint.bind(this)
     this.handleDeal = this.handleDeal.bind(this)
     this.setTrump = this.setTrump.bind(this)
 
-  }
-  pause() {
-    setTimeout(event => {
-      console.log('pass')
-    }, 2000)
   }
   componentDidMount () {
     const {homeOne, awayOne, homeTwo, awayTwo, topKitty} = fullDeck.shuffle().deal()
@@ -80,6 +75,9 @@ export default class HomeScreen extends React.Component {
     })
   }
   handleDeal () {
+    const gamePoint =
+      this.state.homeTricks > this.state.awayTricks ?
+      'homeGames' : 'awayGames'
     const {homeOne, awayOne, homeTwo, awayTwo, topKitty} = fullDeck.shuffle().deal()
     this.setState({
       homeOne,
@@ -97,6 +95,9 @@ export default class HomeScreen extends React.Component {
         player: '',
         team: ''
       },
+      homeTricks: 0,
+      awayTricks: 0,
+      [gamePoint]: this.state[gamePoint] + 1
     })
   }
   setTrump(){
@@ -106,37 +107,106 @@ export default class HomeScreen extends React.Component {
         topKitty: []
       })
     } else {
-    Alert.alert(
-      'Choose Trump',
-      null,
-      [
-        {text: '♥️', onPress: () => this.setState({trump: 'H', calledBy: 'homeOne'})},
-        {text: '♣️', onPress: () => this.setState({trump: 'C', calledBy: 'homeOne'})},
-        {text: '♦️', onPress: () => this.setState({trump: 'D', calledBy: 'homeOne'})},
-        {text: '♠️', onPress: () => this.setState({trump: 'S', calledBy: 'homeOne'})},
-        {
-          text: 'Pass',
-          onPress: () => this.setState({trump: 'H', calledBy: 'awayOne'}),
-          style: 'cancel',
-        },
-      ],
-      {cancelable: false},
-    )
-  }
+      Alert.alert(
+        'Choose Trump',
+        null,
+        [
+          {text: '♥️', onPress: () => this.setState({trump: 'H', calledBy: 'homeOne'})},
+          {text: '♣️', onPress: () => this.setState({trump: 'C', calledBy: 'homeOne'})},
+          {text: '♦️', onPress: () => this.setState({trump: 'D', calledBy: 'homeOne'})},
+          {text: '♠️', onPress: () => this.setState({trump: 'S', calledBy: 'homeOne'})},
+          {
+            text: 'Pass',
+            onPress: () => this.setState({trump: 'H', calledBy: 'awayOne'}),
+            style: 'cancel',
+          },
+        ],
+        {cancelable: false},
+      )
+    }
   }
   handlePlay(card) {
     const homeOne = this.state.homeOne.filter(e => e !== card)
     this.setState({
       homeOne: homeOne,
       homeOnePlayed: card,
-      suitLead: card[1]
+      suitLead: card[1],
+      currentCardWinning: {
+        card: card,
+        player: 'homeOne',
+        team: 'home'
+      },
+      awayOnePlayed: [],
+      homeTwoPlayed: [],
+      awayTwoPlayed: []
     })
+    pleaseWait(this.handlePlayAwayOne)
+  }
+  handlePlayAwayOne(){
     const {restOfHand, cardToPlay} = playCard(this.state.awayOne, this.state.suitLead, this.state.trump)
+    if (isNextCardWinning(this.state.currentCardWinning.card, cardToPlay, this.state.suitLead, this.state.trump)){
+      this.setState({
+        currentCardWinning: {
+          card: cardToPlay,
+          player: 'awayOne',
+          team: 'away'
+        },
+        awayOne: restOfHand,
+        awayOnePlayed: cardToPlay
+      })
+    } else {
+      this.setState({
+        awayOne: restOfHand,
+        awayOnePlayed: cardToPlay
+      })
+    }
+    pleaseWait(this.handlePlayHomeTwo)
+  }
+  handlePlayHomeTwo() {
+    const {restOfHand, cardToPlay} = playCard(this.state.homeTwo, this.state.suitLead, this.state.trump)
+    if (isNextCardWinning(this.state.currentCardWinning.card, cardToPlay, this.state.suitLead, this.state.trump)){
+      this.setState({
+        currentCardWinning: {
+          card: cardToPlay,
+          player: 'homeTwo',
+          team: 'home'
+        },
+        homeTwo: restOfHand,
+        homeTwoPlayed: cardToPlay
+      })
+    } else {
+      this.setState({
+        homeTwo: restOfHand,
+        homeTwoPlayed: cardToPlay
+      })
+    }
+    pleaseWait(this.handlePlayAwayTwo)
+  }
+  handlePlayAwayTwo() {
+    const {restOfHand, cardToPlay} = playCard(this.state.awayTwo, this.state.suitLead, this.state.trump)
+    if (isNextCardWinning(this.state.currentCardWinning.card, cardToPlay, this.state.suitLead, this.state.trump)){
+      this.setState({
+        currentCardWinning: {
+          card: cardToPlay,
+          player: 'awayTwo',
+          team: 'away'
+        },
+        awayTwo: restOfHand,
+        awayTwoPlayed: cardToPlay
+      })
+    } else {
+      this.setState({
+        awayTwo: restOfHand,
+        awayTwoPlayed: cardToPlay
+      })
+    }
+    this.handlePoint()
+  }
+  handlePoint() {
+    let teamTricks = this.state.currentCardWinning.team + 'Tricks'
     this.setState({
-      awayOne: restOfHand,
-      awayOnePlayed: cardToPlay
+      [teamTricks]: this.state[teamTricks] + 1
     })
-    console.log(this.state.awayOne)
   }
 
 
@@ -161,36 +231,55 @@ export default class HomeScreen extends React.Component {
                 </MonoText>
                 : null}
 
-              <View style={[styles.developmentModeText, styles.partnerContainer]}>
-              <View style={styles.leftPartner}>
-                <Text>
-                  Home: {this.state.gamePoints.home}
-                </Text>
-              </View>
-              <View style={styles.rightPartner}>
-                <Text>
-                  Away: {this.state.gamePoints.away}
-                </Text>
-              </View>
-              </View>
+{/* SCOREBOARD */}
+                <View style={styles.leftPartner}>
+                  <Text>
+                    HOME: {this.state.homeGames}
+                  </Text>
+                  <Text>
+                    Tricks: {this.state.homeTricks}
+                  </Text>
+                </View>
+                <View style={styles.rightPartner}>
+                  <Text>
+                    AWAY: {this.state.awayGames}
+                  </Text>
+                  <Text>
+                    Tricks: {this.state.awayTricks}
+                  </Text>
+                </View>
             </View>
 
-
+{/* HOME TEAMMATE FLEXBOX */}
           <View style={styles.homeTeammate}>
-            <Card team="home" />
+            { this.state.homeTwoPlayed.length ?
+              <Card rank={this.state.homeTwoPlayed[0]} suit={this.state.homeTwoPlayed[1]} />
+            :
+              <Card team="home" />
+            }
           </View>
 
+{/* AWAY TEAM FLEXBOX */}
           <View style={styles.partnerContainer} >
             <View style={styles.leftPartner}>
-              <Card team="away" style={styles.card} />
+              { this.state.awayOnePlayed.length ?
+                <Card rank={this.state.awayOnePlayed[0]} suit={this.state.awayOnePlayed[1]} />
+              :
+                <Card team="away" />
+              }
             </View>
 
 
             <View style={styles.rightPartner}>
-              <Card team="away" />
+              { this.state.awayTwoPlayed.length ?
+                <Card rank={this.state.awayTwoPlayed[0]} suit={this.state.awayTwoPlayed[1]} />
+              :
+                <Card team="away" />
+              }
             </View>
           </View>
 
+{/* USER CARD PLAYED AND KITTY*/}
           <View style={styles.userCardPlayed}>
             { this.state.homeOnePlayed.length
               ? <Card rank={this.state.homeOnePlayed[0]} suit={this.state.homeOnePlayed[1]} />
