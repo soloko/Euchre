@@ -12,12 +12,12 @@ import {
   Button,
   TouchableOpacity,
   View,
+  Vibration
 } from 'react-native';
 import { MonoText } from '../components/StyledText';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Card from '../components/Card'
 import { fullDeck, suitToIcon, randomPhrase, playCard, pleaseWait, isNextCardWinning } from '../utils'
-import { thisTypeAnnotation } from '@babel/types';
 
 
 export default class HomeScreen extends React.Component {
@@ -78,6 +78,27 @@ export default class HomeScreen extends React.Component {
     const gamePoint =
       this.state.homeTricks > this.state.awayTricks ?
       'homeGames' : 'awayGames'
+    if (gamePoint === 'homeGames' && this.state.homeGames === 1){
+      Vibration.vibrate()
+      Alert.alert(
+        'YOU WIN',
+        'Wow, you are amazing!',
+        [
+          {text: 'Play Agiain', onPress: () => this.setState({homeGames: 0, awayGames: 0})},
+        ],
+        {cancelable: false},
+      )
+    }
+    if (gamePoint === 'awayGames' && this.state.awayGames === 1){
+      Alert.alert(
+        'YOU LOSE',
+        'Wow, that was interesting!',
+        [
+          {text: 'Play Agiain', onPress: () => this.setState({homeGames: 0, awayGames: 0})},
+        ],
+        {cancelable: false},
+      )
+    }
     const {homeOne, awayOne, homeTwo, awayTwo, topKitty} = fullDeck.shuffle().deal()
     this.setState({
       homeOne,
@@ -200,12 +221,17 @@ export default class HomeScreen extends React.Component {
         awayTwoPlayed: cardToPlay
       })
     }
-    this.handlePoint()
+    setTimeout(this.handlePoint, 1500)
   }
   handlePoint() {
     let teamTricks = this.state.currentCardWinning.team + 'Tricks'
+    if (teamTricks === 'homeTricks') Vibration.vibrate()
     this.setState({
-      [teamTricks]: this.state[teamTricks] + 1
+      [teamTricks]: this.state[teamTricks] + 1,
+      homeOnePlayed: [],
+      homeTwoPlayed: [],
+      awayOnePlayed: [],
+      awayTwoPlayed: []
     })
   }
 
@@ -225,7 +251,7 @@ export default class HomeScreen extends React.Component {
             <View
             style={[styles.codeHighlightContainer, styles.navigationFilename]}>
 
-                {this.state.trump && homeOne.length ?
+                {this.state.trump && awayTwo.length ?
                 <MonoText style={[styles.codeHighlightText, styles.quoteText]}>
                   The trump is <Icon name={suitToIcon(this.state.trump)} color={(this.state.trump === 'D' || this.state.trump === 'H') ? '#fc4242' : '#000000'} />
                 </MonoText>

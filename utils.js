@@ -227,7 +227,7 @@ export const playCard = (cards, suitLead, trump) => {
     playObj.restOfHand = [...sortedHand.trump, ...sortedHand.nonTrump]
     return playObj
   }
-  // must follow suit
+  // must follow suit if you have any off suit
   else if (followSuit(sortedHand.nonTrump, suitLead)){
     playObj.cardToPlay = sortedHand.nonTrump.find(card => card[1] === suitLead)
     const otherNons = sortedHand.nonTrump.filter(card => card !== playObj.cardToPlay)
@@ -263,7 +263,7 @@ export const communicationText = (dealer, turnIndex, turnOrder, trump, calledBy)
 }
 
 export const pleaseWait = (func) => {
-  setTimeout(func, 800)
+  setTimeout(func, 500)
 }
 
 export const randomPhrase = () => {
