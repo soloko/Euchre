@@ -143,6 +143,7 @@ export const isNextCardWinning = (cardWinning, nextCard, suitLead, trump) => {
   return false
 }
 
+// COMPUTER PLAY CARD
 const findTrumpInHand = (cards, trumpSuit) => {
   let hand = {
     trump: [],
@@ -204,7 +205,6 @@ const findTrumpInHand = (cards, trumpSuit) => {
   }
 }
 
-// COMPUTER PLAY CARD
 const followSuit = (cards, suitLead) => {
   return cards.some(card => card[1] === suitLead)
 }
