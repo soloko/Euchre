@@ -7,9 +7,9 @@ This app is a card game designed for ios. Euchre is a card game with four player
 Fork and clone this repo locally
 
 ### Prerequisites
-This project uses react-native and expo
-Use [expo](https://expo.io/) for development
-You can also download Expo Client on your phone to see how it looks on your device
+* This project uses react-native and expo
+* Use [expo](https://expo.io/) for development
+* You can also download Expo Client on your phone to see how it looks on your device
 
 ### Installing
 
