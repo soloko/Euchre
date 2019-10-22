@@ -48,7 +48,7 @@ Then you can test the app on your device or the ios simulator locally
 
 ## Authors
 
-**Andrea Soloko** - *Initial work* - [My Github Profile](https://github.com/soloko)
+**Andrea Soloko** - *Sole Developer* - [My Github Profile](https://github.com/soloko)
 
 ## License
 
